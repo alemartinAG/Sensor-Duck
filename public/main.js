@@ -153,7 +153,7 @@ function draw(){
     if(!pausa){
         context.drawImage(scorebg, canvas.width/2-scorebg.width, canvas.height/2-scorebg.height/2);
         for(let j=highscores.length-1; j>=0; j--){
-        	context.fillText(highscores[j], canvas.width/2, canvas.height/2 - j*50);
+            context.fillText(highscores[(j-2)*(-1)], canvas.width/2-scorebg.width/2-10-10*(highscores[(j-2)*(-1)] > 10), (canvas.height/2) + 20 + 45*j );
         }
     }
 
