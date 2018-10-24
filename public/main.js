@@ -1,8 +1,5 @@
 var socket = io.connect('http://localhost:8080', {'forceNew' : true});
-
-socket.on('messages', function(data){
-	console.log(data);
-});
+var hand_position = 10;
 
 var canvas = document.getElementById("canvas");
 
@@ -46,13 +43,14 @@ pausa_off.src = "sounds/pausaoff.wav";
 
 ///
 var x_pos = 100;
-var y_pos = 150;
+var y_pos = 10;
 var scale = 0.9;
+var seccion = 186;
 
 var gravity = 2;
 var velocity = 2;
 
-var gap = 200+(10*velocity);
+var gap = seccion;
 var constant;
 ///
 
@@ -67,6 +65,11 @@ pipe[0] = {
 
 var score = 0;
 var highscores = [0, 0, 0];
+
+socket.on('messages', function(data){
+    console.log(data);
+    hand_position = seccion * data.value;
+});
 
 document.addEventListener("keydown", press);
 document.addEventListener("keyup", release);
@@ -92,19 +95,20 @@ function press(event){
     }
 
     if(keyName == 'a'){
-        y_pos -= 20*velocity*pausa;
+        y_pos -= seccion*pausa;
     }
 
     if(keyName == 's'){
-        y_pos += 20*velocity*pausa;
+        y_pos += seccion*pausa;
     }
 
     if(y_pos < 0){
-        y_pos = 0;
+        y_pos = 10;
     }
 
     if(y_pos > canvas.height-bird.height*scale){
-        y_pos = canvas.height-bird.height*scale;
+        //y_pos = canvas.height-bird.height*scale;
+        y_pos = 754;
     }
 
     bird.src = "images/bird2.png";
@@ -136,7 +140,8 @@ function draw(){
 
             pipe.push({
                 x : canvas.width,
-                y : Math.floor(Math.random()*pipe_up.height) - pipe_up.height,
+                //y : Math.floor(Math.random()*pipe_up.height) - pipe_up.height,
+                y: (-10 - pipe_up.height) + seccion * Math.floor(Math.random()*5),
                 flag_n : 0,
                 flag_s : 0
             });
@@ -156,6 +161,8 @@ function draw(){
             context.fillText(highscores[(j-2)*(-1)], canvas.width/2-scorebg.width/2-10-10*(highscores[(j-2)*(-1)] > 10), (canvas.height/2) + 20 + 45*j );
         }
     }
+
+    y_pos = hand_position;
 
     requestAnimationFrame(draw);
 }
@@ -181,7 +188,7 @@ function checkCollision(i){
         score = 0;
 
         x_pos = 100;
-        y_pos = 150;
+        y_pos = 10;
 
 
         //envio los puntajes

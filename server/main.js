@@ -39,15 +39,14 @@ app.get('/', function(req, res){
 
 io.on('connection', function(socket){
 	console.log('\nClient connected to the server\n');
-	
-	/*socket.emit('messages', {
-		id: 1,
-		text: "mensaje",
-		author: "ale"
-	});*/
 
 	socket.on('score-message', function(data){
 		//console.log(data.first);
+
+		socket.emit('messages', {
+			value : 3
+		});
+
 		try{
 			port.write(data.first);
 		}
