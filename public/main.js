@@ -48,7 +48,7 @@ var scale = 0.9;
 var seccion = 186;
 
 var gravity = 2;
-var velocity = 2;
+var velocity = 3;
 
 var gap = seccion;
 var constant;
@@ -58,7 +58,7 @@ var pipe = [];
 
 pipe[0] = {
     x : canvas.width,
-    y : 0,
+    y : (-10 - pipe_up.height) + seccion * Math.floor(Math.random()*5),
     flag_n : 0,
     flag_s : 0
 };
@@ -67,8 +67,8 @@ var score = 0;
 var highscores = [0, 0, 0];
 
 socket.on('messages', function(data){
-    console.log(data);
-    hand_position = seccion * data.value;
+    //console.log(data);
+    hand_position = 10 + seccion * data;
 });
 
 document.addEventListener("keydown", press);
@@ -161,8 +161,10 @@ function draw(){
             context.fillText(highscores[(j-2)*(-1)], canvas.width/2-scorebg.width/2-10-10*(highscores[(j-2)*(-1)] > 10), (canvas.height/2) + 20 + 45*j );
         }
     }
-
-    y_pos = hand_position;
+    else{
+        y_pos = hand_position;
+    }
+    
 
     requestAnimationFrame(draw);
 }
@@ -177,7 +179,7 @@ function checkCollision(i){
 
         pipe[0] = {
             x : canvas.width,
-            y : 0,
+            y : (-10 - pipe_up.height) + seccion * Math.floor(Math.random()*5),
             flag_n : 0,
             flag_s : 0
         };
