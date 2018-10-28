@@ -14,7 +14,7 @@ process.on('unhandledRejection', error => {
 });
 
 // Open the port
-var port = new SerialPort("/dev/ttyUSB0", { baudRate: 9600 });
+var port = new SerialPort("/dev/ttyUSB1", { baudRate: 9600 });
 
 
 app.use(express.static('public'));
@@ -48,7 +48,13 @@ port.on("open", function () {
 
 	port.on('data', function(data) {
 
+		//console.log("data: "+data);
+
 		var dato = data.toString();
+		//var dato = dato.charCodeAt(0);
+		//var dato = Number(data);
+
+		console.log("datO: "+dato);
     	
     	//console.log(dato);
 

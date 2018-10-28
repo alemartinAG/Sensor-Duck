@@ -48,7 +48,7 @@ var scale = 0.9;
 var seccion = 186;
 
 var gravity = 2;
-var velocity = 3;
+var velocity = 5;
 
 var gap = seccion;
 var constant;

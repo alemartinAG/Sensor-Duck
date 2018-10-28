@@ -111,7 +111,7 @@ void mandarPulso(){
 	//reset y start timer
 	*T0CR |= (1<<1);
 	*T0CR |= (1<<0);
-	*T0CR &= (0<<1);
+	*T0CR &= ~(1<<1);
 
 	return;
 }
@@ -133,7 +133,9 @@ void TIMER0_IRQHandler(void){
 		*T0IR |= (1<<0); //limpio bandera
 
 		if(counter == 3){
-			*T0MCR &= (0<<0)|(0<<1); //deshabilito interrupt y reset con MR0
+			//deshabilito interrupt y reset con MR0
+			*T0MCR &= ~(1<<0); 
+			*T0MCR &= ~(1<<1);
 		}
 
 	} else{
