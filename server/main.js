@@ -54,7 +54,15 @@ port.on("open", function () {
 
     	//Envio data por el socket como message
     	try{
-    		io.sockets.emit('distancia', dato);
+
+    		//CORROBORAR QUE NO ENVIE VALORES DE 1 METRO EL SENSOR
+    		if(dato < 100){
+    			io.sockets.emit('distancia', dato);
+    		}
+    		else{
+    			io.sockets.emit('velocidad', dato);
+    		}
+    		
     	}
     	catch(error){
     		console.log(error);

@@ -6,42 +6,36 @@ var canvas = document.getElementById("canvas");
 var context = canvas.getContext("2d");
 context.font = 'bold 25pt Arial';
 
-///
+
+///IMAGENES///
 var bird = new Image();
 var bird_2 = new Image();
 var background = new Image();
 var pipe_up = new Image();
 var pipe_dw = new Image();
+var scorebg = new Image();
 
 bird.src = "images/bird.png";
 bird_2.src = "images/bird2.png";
 background.src = "images/background.png";
 pipe_up.src = "images/obstaculo.png";
 pipe_dw.src = "images/obstaculo2.png";
-///
-
-///
-var scorebg = new Image();
 scorebg.src = "images/score.png";
-///
+///imagenes///
 
-///
+
+///SONIDOS///
 var quack = new Audio();
-quack.src = "sounds/quack.mp3";
-
-var song = new Audio();
-song.src = "sounds/song.mp3";
-///
-
-///
-var pausa = 1;
 var pausa_on = new Audio();
 var pausa_off = new Audio();
+
+quack.src = "sounds/quack.mp3";
 pausa_on.src = "sounds/pausa.mp3";
 pausa_off.src = "sounds/pausaoff.wav";
-///
+///sonidos///
 
-///
+
+///VARIABLES///
 var x_pos = 100;
 var y_pos = 10;
 var scale = 0.9;
@@ -52,9 +46,15 @@ var velocity = 5;
 
 var gap = seccion;
 var constant;
-///
+
+var pausa = 1;
+
+var score = 0;
+var highscores = [0, 0, 0];
 
 var pipe = [];
+///variables///
+
 
 pipe[0] = {
     x : canvas.width,
@@ -63,20 +63,23 @@ pipe[0] = {
     flag_s : 0
 };
 
-var score = 0;
-var highscores = [0, 0, 0];
 
+//Selecciono la posicion segun el valor que me llega
 socket.on('distancia', function(data){
-    //data = Math.trunc(data/10);
-    console.log(data);
+    data = Math.trunc(data/10);
+    //console.log(data);
 
     hand_position = 10 + seccion * data;
 });
 
+//Aumento la velocidad de acuerdo al valor que me llega
+socket.on('velocidad', function(data){
+    velocity = Math.trunc(data-100);
+    //console.log(data);
+});
+
 alert("Play");
-
 draw();
-
 
 document.addEventListener("keydown", press);
 document.addEventListener("keyup", release);
@@ -126,8 +129,6 @@ function draw(){
     context.drawImage(background, 0, 0);
     context.drawImage(bird, x_pos, y_pos, bird.width*scale, bird.height*scale);
 
-    //song.play();
-
     for(var i=0; i<pipe.length; i++){
 
         constant = pipe_up.height+gap;
@@ -155,9 +156,10 @@ function draw(){
         checkCollision(i);
     }
 
+    //texto de puntaje
     context.fillText("score: "+score,5,30);
 
-    //Tabla de puntajes
+    //Tabla de puntajes y modo pausa
     if(!pausa){
         context.drawImage(scorebg, canvas.width/2-scorebg.width, canvas.height/2-scorebg.height/2);
         for(let j=highscores.length-1; j>=0; j--){
@@ -174,12 +176,15 @@ function draw(){
 
 function checkCollision(i){
 
+    //Chequeo la colision
     if(x_pos + (bird.width*scale) >= pipe[i].x && x_pos <= pipe[i].x + pipe_up.width && (y_pos <= pipe[i].y + pipe_up.height || y_pos+ (bird.height*scale) >= pipe[i].y+constant)){
 
+        //Limpio el arreglo de pipes
         for(var j=pipe.length-1; j>0; j--){
             pipe.pop();
         }
 
+        //Lo inicializo nuevamente
         pipe[0] = {
             x : canvas.width,
             y : (-10 - pipe_up.height) + seccion * Math.floor(Math.random()*5),
@@ -187,17 +192,19 @@ function checkCollision(i){
             flag_s : 0
         };
 
+        //Manejo de puntajes
         compareScores();
         sortScores();
 
+        //Reinicio
         score = 0;
-
         x_pos = 100;
         y_pos = 10;
 
         //envio los puntajes
         socket.emit('score-message', highscores[2]);
     }
+
 }
 
 //Funcion para incrementar scores
