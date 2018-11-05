@@ -14,31 +14,29 @@ process.on('unhandledRejection', error => {
 });
 
 // Open the port
-var port = new SerialPort("/dev/ttyUSB1", { baudRate: 9600 });
+var port = new SerialPort("/dev/ttyUSB0", { baudRate: 9600 });
 
 
 app.use(express.static('public'));
 
 io.on('connection', function(socket){
+	
 	console.log('\nClient connected to the server\n');
 
-	//clientSocket = socket;
-
+	//Recibo highscore
 	socket.on('score-message', function(data){
-		//console.log(data.first);
 
-		/*socket.emit('messages', {
-			value : 3
-		});*/
-
+		//Lo mando por el puerto serie
 		try{
-			port.write(data.first);
+			port.write(data.toString());
 		}
 		catch(error){
 			//console.error(error);
 			console.log("\nNo hay conexion con serial port")
 		}
 	});
+
+
 });
 
 // Read the port data
@@ -48,20 +46,15 @@ port.on("open", function () {
 
 	port.on('data', function(data) {
 
-		//console.log("data: "+data);
-
+		//Lo convierto de ascii a decimal
 		var dato = data.toString();
-		//var dato = dato.charCodeAt(0);
-		//var dato = Number(data);
+		dato = dato.charCodeAt(0);
 
-		console.log("datO: "+dato);
-    	
-    	//console.log(dato);
+		//console.log("dato: "+dato);
 
     	//Envio data por el socket como message
     	try{
-    		//clientSocket.emit('messages', dato);
-    		io.sockets.emit('messages', dato);
+    		io.sockets.emit('distancia', dato);
     	}
     	catch(error){
     		console.log(error);
@@ -76,9 +69,6 @@ port.on("open", function () {
 app.get('/', function(req, res){
 	res.status(200).send("Ale");
 });
-
-
-
 
 server.listen(8080, function(){
 	console.log("\nSv running in http://localhost:8080\n");

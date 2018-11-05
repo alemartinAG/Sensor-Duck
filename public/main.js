@@ -66,17 +66,20 @@ pipe[0] = {
 var score = 0;
 var highscores = [0, 0, 0];
 
-socket.on('messages', function(data){
-    //console.log(data);
+socket.on('distancia', function(data){
+    //data = Math.trunc(data/10);
+    console.log(data);
+
     hand_position = 10 + seccion * data;
 });
-
-document.addEventListener("keydown", press);
-document.addEventListener("keyup", release);
 
 alert("Play");
 
 draw();
+
+
+document.addEventListener("keydown", press);
+document.addEventListener("keyup", release);
 
 function press(event){
 
@@ -94,7 +97,7 @@ function press(event){
 
     }
 
-    if(keyName == 'a'){
+    /*if(keyName == 'a'){
         y_pos -= seccion*pausa;
     }
 
@@ -109,7 +112,7 @@ function press(event){
     if(y_pos > canvas.height-bird.height*scale){
         //y_pos = canvas.height-bird.height*scale;
         y_pos = 754;
-    }
+    }*/
 
     bird.src = "images/bird2.png";
 }
@@ -192,20 +195,15 @@ function checkCollision(i){
         x_pos = 100;
         y_pos = 10;
 
-
         //envio los puntajes
-        var payload = {
-        	first : highscores[2],
-        	second : highscores[1],
-        	third : highscores[0]
-        };
-
-        socket.emit('score-message', payload);
+        socket.emit('score-message', highscores[2]);
     }
 }
 
+//Funcion para incrementar scores
 function incrementScore(i){
 
+    //Si la posicion x del obstaculo es menor o igual a 5 incremento
     if(pipe[i].x <= 5 && !pipe[i].flag_s){
         score++;
         pipe[i].flag_s = 1;
@@ -214,10 +212,13 @@ function incrementScore(i){
     }
 }
 
+
+//Funcion para ordenar high-scores
 function sortScores(){
 
     var aux;
 
+    //Ordeno el arreglo de high-scores de < a >
     for(var j=0; j<highscores.length-1; j++){
         if(highscores[j] > highscores[j+1]){
             aux = highscores[j];
@@ -227,6 +228,7 @@ function sortScores(){
     }
 }
 
+//Funcion para comaprar el score actual con los high-scores
 function compareScores(){
     for(var j=0; j<highscores.length; j++){
         if(score > highscores[j]){
