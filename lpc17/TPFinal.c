@@ -41,6 +41,10 @@ int dist_cm = 0;
 char palabra;
 int recibido = 4;
 
+const int VELMIN = 2;
+const int VELMED = 4;
+const int VELMAX = 6;
+
 uint16_t conversion = 0;
 uint16_t conversion_prev = 0;
 uint16_t conv_final;
@@ -80,29 +84,25 @@ int main(void) {
 
     	mandarPulso();
 
-    	//Valores de 0 a 7 en binario dependiendo la conversion
+
     	conversion = (LPC_ADC -> ADDR0 >> 4);
-    	/*conversion = (uint16_t) (LPC_ADC -> ADDR0 & 0x1000);
-    	conversion += (uint16_t) (LPC_ADC -> ADDR0 & 0x2000);
-    	conversion += (uint16_t) (LPC_ADC -> ADDR0 & 0x4000);
-    	*/
 
     	if (conversion < 1365){ //Es igual al valor máximo de ADC/3 (4096/3) = 0x555
-    		conv_final = 1;
+    		conv_final = VELMIN;
     	}
     	else if (conversion > 1365 && conversion < 2730){ // Desde 0x555 hasta 0xAAA
-    		conv_final = 2;
+    		conv_final = VELMED;
     	}
     	else if (conversion > 2730){ //Desde 0xAAA hasta 0xFFF
-    		conv_final = 3;
+    		conv_final = VELMAX;
     	}
 
     	//Si cambia el valor de la conversion respecto al anterior envio
-    	if(conversion != conversion_prev){
+    	if(conv_final != conversion_prev){
     		//Mandar mensajes
-    		palabra = 100+conversion;
+    		palabra = (uint8_t) 100+conv_final;
     		enviarPalabra();
-    		conversion_prev = conversion;
+    		conversion_prev = conv_final;
     	}
 
     }
