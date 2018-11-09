@@ -21,6 +21,12 @@ typedef unsigned char bool;
 #define true 1;
 #define false 0;
 
+#define addrFIO0DIR 0x2009c000;
+#define addrFIO0SET 0x2009c018;
+unsigned int volatile *const FIO0DIR = (unsigned int*) addrFIO0DIR;
+unsigned int volatile *const FIO0SET = (unsigned int*) addrFIO0SET;
+unsigned int volatile *const FIO0CLR = (unsigned int*) 0x2009c01c;
+
 
 void TIMER0_IRQHandler(void);
 void TIMER2_IRQHandler(void);
@@ -31,6 +37,7 @@ void calcularDist();
 void enviarPalabra();
 void configUART();
 void configADC();
+void newHighscore();
 
 int counter = 0;
 int auxCap1 = 0;
@@ -39,7 +46,7 @@ int auxCap2 = 0;
 int tiempo = 0;
 int dist_cm = 0;
 char palabra;
-int recibido = 4;
+int recibido = 0;
 
 const int VELMIN = 2;
 const int VELMED = 4;
@@ -49,16 +56,18 @@ uint16_t conversion = 0;
 uint16_t conversion_prev = 0;
 uint16_t conv_final;
 
-int highscore = 0;
+int highscore = 49;
+uint8_t flagHigh = 0;
 
 int main(void) {
+
+	//LPC_GPIO0 -> FIODIR0 |= (1<<22);
+	*FIO0DIR |= (1<<22); //Puerto 0.22 como salida para encender lampara
+	*FIO0SET |= (1<<22); //Apago lampara
 
 	LPC_SC -> PCONP |= (1<<22); //Timer2 activado
 
 	LPC_GPIO0 -> FIODIR0 |= (1<<2); //Puerto 0.2 como salida Trigger
-
-	NVIC_EnableIRQ(TIMER0_IRQn);
-	NVIC_EnableIRQ(TIMER2_IRQn);
 
 	configUART();
 	configADC();
@@ -71,7 +80,8 @@ int main(void) {
 
 	LPC_TIM2 -> TCR |= (1<<0); //Inicio TMR2
 
-
+	NVIC_EnableIRQ(TIMER0_IRQn);
+	NVIC_EnableIRQ(TIMER2_IRQn);
 
 	mandarPulso();
 
@@ -167,9 +177,8 @@ void UART3_IRQHandler(void){
 
 	if(recibido > highscore){
 		highscore = recibido;
-		//PRENDO LAMPARA
+		newHighscore();
 	}
-
 }
 
 void calcularDist(){
@@ -186,10 +195,26 @@ void calcularDist(){
 	palabra = (uint8_t) dist_cm;
 
 	if(palabra > 90){
-		palabra = 60;
+		//palabra = 20;
 	}
 
-	palabra = palabra/10;
+	if(palabra <= 3){
+		palabra = 0;
+	}
+	else if(palabra <= 6){
+		palabra = 1;
+	}
+	else if(palabra <= 10){
+		palabra = 2;
+	}
+	else if(palabra <= 14){
+		palabra = 3;
+	}
+	else{
+		palabra = 4;
+	}
+
+	//palabra = palabra/10;
 	enviarPalabra();
 
 
@@ -251,6 +276,19 @@ void configADC(){
 
 	//Habilito Interrupcion ADC en NVIC
 	//NVIC_EnableIRQ(ADC_IRQn);
+
+	return;
+}
+
+void newHighscore(){
+
+	if (flagHigh == 0){
+		*FIO0CLR |= (1<<22); //Enciendo lampara
+		flagHigh++;
+	}else {
+		*FIO0SET |= (1<<22); //Apago lampara
+		flagHigh = 0;
+	}
 
 	return;
 }
