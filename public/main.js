@@ -44,8 +44,7 @@ var seccion = 186;
 var gravity = 2;
 var velocity = 5;
 
-var gap = seccion;
-var constant;
+var constant = pipe_up.height+seccion;
 
 var pausa = 1;
 
@@ -66,7 +65,7 @@ pipe[0] = {
 
 //Selecciono la posicion segun el valor que me llega
 socket.on('distancia', function(data){
-    data = Math.trunc(data/10);
+    //data = Math.trunc(data/10);
     //console.log(data);
 
     hand_position = 10 + seccion * data;
@@ -74,6 +73,8 @@ socket.on('distancia', function(data){
 
 //Aumento la velocidad de acuerdo al valor que me llega
 socket.on('velocidad', function(data){
+
+    alert('cambio velocidad: '+data-100)
     velocity = Math.trunc(data-100);
     //console.log(data);
 });
@@ -131,7 +132,7 @@ function draw(){
 
     for(var i=0; i<pipe.length; i++){
 
-        constant = pipe_up.height+gap;
+        constant 
 
         context.drawImage(pipe_dw, pipe[i].x, pipe[i].y);
         context.drawImage(pipe_up, pipe[i].x, pipe[i].y+constant);
@@ -144,7 +145,6 @@ function draw(){
 
             pipe.push({
                 x : canvas.width,
-                //y : Math.floor(Math.random()*pipe_up.height) - pipe_up.height,
                 y: (-10 - pipe_up.height) + seccion * Math.floor(Math.random()*5),
                 flag_n : 0,
                 flag_s : 0

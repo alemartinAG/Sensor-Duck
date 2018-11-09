@@ -62,7 +62,6 @@ port.on("open", function () {
     		else{
     			io.sockets.emit('velocidad', dato);
     		}
-    		
     	}
     	catch(error){
     		console.log(error);
