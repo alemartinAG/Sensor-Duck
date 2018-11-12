@@ -18,8 +18,8 @@ var scorebg = new Image();
 bird.src = "images/bird.png";
 bird_2.src = "images/bird2.png";
 background.src = "images/background.png";
-pipe_up.src = "images/obstaculo.png";
-pipe_dw.src = "images/obstaculo2.png";
+pipe_up.src = "images/longpipe.png";
+pipe_dw.src = "images/longpipe2.png";
 scorebg.src = "images/score.png";
 ///imagenes///
 
@@ -44,7 +44,7 @@ var seccion = 186;
 var gravity = 2;
 var velocity = 5;
 
-var constant = pipe_up.height+seccion;
+var constant;
 
 var pausa = 1;
 
@@ -65,18 +65,24 @@ pipe[0] = {
 
 //Selecciono la posicion segun el valor que me llega
 socket.on('distancia', function(data){
-    //data = Math.trunc(data/10);
-    //console.log(data);
-
     hand_position = 10 + seccion * data;
+});
+
+//Selecciono la posicion segun el valor que me llega
+socket.on('high', function(data){
+    alert("Nuevo High-Score!");
 });
 
 //Aumento la velocidad de acuerdo al valor que me llega
 socket.on('velocidad', function(data){
-
-    alert('cambio velocidad: '+data-100)
-    velocity = Math.trunc(data-100);
-    //console.log(data);
+    //alert('cambio velocidad: '+(data-100))
+    velocity = data-100;
+    if(velocity == 6){
+        bird.src = "images/patodelmal.png";
+    } 
+    else{
+        bird.src = "images/bird.png";
+    }
 });
 
 alert("Play");
@@ -117,12 +123,22 @@ function press(event){
         //y_pos = canvas.height-bird.height*scale;
         y_pos = 754;
     }*/
-
-    bird.src = "images/bird2.png";
+    if(velocity != 6){
+        bird.src = "images/bird2.png";
+    }
+    else{
+        bird.src = "images/patodelmal2.png";
+    }
+    
 }
 
 function release(){
-    bird.src = "images/bird.png";
+    if(velocity != 6){
+        bird.src = "images/bird.png";
+    }
+    else{
+        bird.src = "images/patodelmal.png";
+    }
 }
 
 function draw(){
@@ -132,7 +148,7 @@ function draw(){
 
     for(var i=0; i<pipe.length; i++){
 
-        constant 
+        constant = pipe_up.height+seccion;
 
         context.drawImage(pipe_dw, pipe[i].x, pipe[i].y);
         context.drawImage(pipe_up, pipe[i].x, pipe[i].y+constant);

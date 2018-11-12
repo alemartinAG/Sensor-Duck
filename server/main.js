@@ -32,7 +32,7 @@ io.on('connection', function(socket){
 		}
 		catch(error){
 			//console.error(error);
-			console.log("\nNo hay conexion con serial port")
+			console.log("\nNo hay conexion con serial port");
 		}
 	});
 
@@ -54,14 +54,22 @@ port.on("open", function () {
 
     	//Envio data por el socket como message
     	try{
-
-    		//CORROBORAR QUE NO ENVIE VALORES DE 1 METRO EL SENSOR
     		if(dato < 100){
+    			//console.log(dato);
     			io.sockets.emit('distancia', dato);
     		}
-    		else{
-    			io.sockets.emit('velocidad', dato);
+    		else {
+
+    			if(dato < 200){
+    				//console.log(dato);
+    				io.sockets.emit('velocidad', dato);
+    			}
+    			else{
+    				//console.log(dato);
+    				io.sockets.emit('high', dato);
+    			}
     		}
+
     	}
     	catch(error){
     		console.log(error);
