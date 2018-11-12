@@ -13,13 +13,8 @@
 #endif
 
 #include <cr_section_macros.h>
-
 #include <stdio.h>
 #include <stdlib.h>
-
-typedef unsigned char bool;
-#define true 1;
-#define false 0;
 
 #define addrFIO0DIR 0x2009c000;
 #define addrFIO0SET 0x2009c018;
@@ -38,6 +33,9 @@ void enviarPalabra();
 void configUART();
 void configADC();
 void newHighscore();
+void delay(int);
+void configTIMERS();
+void chequearADC();
 
 int counter = 0;
 int auxCap1 = 0;
@@ -52,6 +50,11 @@ const int VELMIN = 2;
 const int VELMED = 4;
 const int VELMAX = 6;
 
+const int SEC0 = 3;
+const int SEC1 = 6;
+const int SEC2 = 10;
+const int SEC3 = 14;
+
 uint16_t conversion = 0;
 uint16_t conversion_prev = 0;
 uint16_t conv_final;
@@ -62,59 +65,27 @@ uint8_t flagHigh = 0;
 int main(void) {
 
 	//LPC_GPIO0 -> FIODIR0 |= (1<<22);
-	*FIO0DIR |= (1<<22); //Puerto 0.22 como salida para encender lampara
-	*FIO0SET |= (1<<22); //Apago lampara
-
-	LPC_SC -> PCONP |= (1<<22); //Timer2 activado
+	*FIO0DIR |= (1<<5); //Puerto 0.5 como salida para encender lampara
+	*FIO0CLR |= (1<<5); //Apago lampara
 
 	LPC_GPIO0 -> FIODIR0 |= (1<<2); //Puerto 0.2 como salida Trigger
 
+	configTIMERS();
 	configUART();
 	configADC();
 
-	LPC_TIM0 -> MR0 = 250; //10us
-
-	LPC_PINCON -> PINSEL0 |= (1<<9) | (1<<8); //Puerto de CAP2.0
-
-	LPC_TIM2 -> CCR |= (1<<0) | (1<<1) | (1<<2); //CAP0 en Rising y Falling Edge y habilito interrupt
-
-	LPC_TIM2 -> TCR |= (1<<0); //Inicio TMR2
-
-	NVIC_EnableIRQ(TIMER0_IRQn);
-	NVIC_EnableIRQ(TIMER2_IRQn);
-
-	mandarPulso();
+	//mandarPulso();
 
     while(1) {
 
-    	for(int i=0; i<3000000; i++){
-
-    	}
-    	enviarPalabra();
-
     	mandarPulso();
 
+    	delay(3000000);
 
-    	conversion = (LPC_ADC -> ADDR0 >> 4);
+    	//mandarPulso();
+    	enviarPalabra();
 
-    	if (conversion < 1365){ //Es igual al valor máximo de ADC/3 (4096/3) = 0x555
-    		conv_final = VELMIN;
-    	}
-    	else if (conversion > 1365 && conversion < 2730){ // Desde 0x555 hasta 0xAAA
-    		conv_final = VELMED;
-    	}
-    	else if (conversion > 2730){ //Desde 0xAAA hasta 0xFFF
-    		conv_final = VELMAX;
-    	}
-
-    	//Si cambia el valor de la conversion respecto al anterior envio
-    	if(conv_final != conversion_prev){
-    		//Mandar mensajes
-    		palabra = (uint8_t) 100+conv_final;
-    		enviarPalabra();
-    		conversion_prev = conv_final;
-    	}
-
+    	chequearADC();
     }
 
     return 0 ;
@@ -131,6 +102,110 @@ void mandarPulso(){
 	LPC_TIM0 -> TCR |= (1<<1);
 	LPC_TIM0 -> TCR |= (1<<0);
 	LPC_TIM0 -> TCR &= ~(1<<1);
+
+	return;
+}
+
+void calcularDist(){
+
+	tiempo = auxCap2 - auxCap1; //tiempo del pulso
+	tiempo = tiempo * 25; //lo paso a us
+
+	dist_cm = tiempo*10/292/2; //calculo de distancia en cm
+	dist_cm = dist_cm/1000;
+
+	palabra = (uint8_t) dist_cm;
+
+	//Elijo valor de sección de acuerdo a distancia
+	if(palabra <= SEC0){
+		palabra = 0;
+	}
+	else if(palabra <= SEC1){
+		palabra = 1;
+	}
+	else if(palabra <= SEC2){
+		palabra = 2;
+	}
+	else if(palabra <= SEC3){
+		palabra = 3;
+	}
+	else{
+		palabra = 4;
+	}
+
+	enviarPalabra();
+
+	//reinicio variables
+	auxCap1 = 0;
+	auxCap2 = 0;
+
+	return;
+}
+
+void delay(int demora){
+	for(int i=0; i<demora; i++){
+		//delay entre mediciones del sensor
+	}
+	return;
+}
+
+void chequearADC(){
+
+	conversion = (LPC_ADC -> ADDR0 >> 4); //valor de conversion del adc
+
+	if (conversion < 1365){
+		//Desde 0x000 hasta 0x555
+		conv_final = VELMIN;
+	}
+	else if (conversion > 1365 && conversion < 2730){
+		//Desde 0x555 hasta 0xAAA
+		conv_final = VELMED;
+	}
+	else if (conversion > 2730){
+		//Desde 0xAAA hasta 0xFFF
+		conv_final = VELMAX;
+	}
+
+	//Si cambia el valor de la conversion respecto al anterior
+	if(conv_final != conversion_prev){
+		//Mando conversion +100 para diferenciarlo de otros msj
+		palabra = (uint8_t) 100+conv_final;
+		enviarPalabra();
+
+		conversion_prev = conv_final;
+	}
+	return;
+}
+
+void newHighscore(){
+
+	palabra = (uint8_t) 200;
+	enviarPalabra();
+	palabra = 0;
+
+	for(int i=0; i<3; i++){
+		*FIO0SET |= (1<<5); //Enciendo lampara
+		delay(10000000);
+		*FIO0CLR |= (1<<5); //Apago lampara
+		delay(10000000);
+	}
+
+	/*if (flagHigh == 0){
+		*FIO0CLR |= (1<<22); //Enciendo lampara
+		flagHigh++;
+	}else {
+		*FIO0SET |= (1<<22); //Apago lampara
+		flagHigh = 0;
+	}*/
+
+	return;
+}
+
+void enviarPalabra(){
+
+	//if(LPC_UART3 -> LSR & (1<<5)){
+		LPC_UART3 -> THR = palabra;
+	//}
 
 	return;
 }
@@ -181,56 +256,19 @@ void UART3_IRQHandler(void){
 	}
 }
 
-void calcularDist(){
+void configTIMERS(){
 
-	tiempo = auxCap2 - auxCap1; //tiempo del pulso
-	tiempo = tiempo * 25; //lo paso a us
+	LPC_TIM0 -> MR0 = 250; //10us
 
-	dist_cm = tiempo*10/292/2;
+	LPC_SC -> PCONP |= (1<<22); //Enciendo Timer2
 
-	//printf("distancia: %i\n", dist_cm);
+	LPC_PINCON -> PINSEL0 |= (1<<9) | (1<<8); //Puerto de CAP2.0 (Echo)
+	LPC_TIM2 -> CCR |= (1<<0) | (1<<1) | (1<<2); //CAP0 en Rising y Falling Edge y habilito interrupt
 
-	dist_cm = dist_cm/1000;
+	LPC_TIM2 -> TCR |= (1<<0); //Inicio TMR2
 
-	palabra = (uint8_t) dist_cm;
-
-	if(palabra > 90){
-		//palabra = 20;
-	}
-
-	if(palabra <= 3){
-		palabra = 0;
-	}
-	else if(palabra <= 6){
-		palabra = 1;
-	}
-	else if(palabra <= 10){
-		palabra = 2;
-	}
-	else if(palabra <= 14){
-		palabra = 3;
-	}
-	else{
-		palabra = 4;
-	}
-
-	//palabra = palabra/10;
-	enviarPalabra();
-
-
-	auxCap1 = 0;
-	auxCap2 = 0;
-
-	return;
-}
-
-
-void enviarPalabra(){
-
-	//itoa(palabra, &string, 10);
-
-	LPC_UART3 -> THR = palabra;
-
+	NVIC_EnableIRQ(TIMER0_IRQn);
+	NVIC_EnableIRQ(TIMER2_IRQn);
 	return;
 }
 
@@ -256,7 +294,6 @@ void configUART(){
 	return;
 }
 
-
 void configADC(){
 
 	//Enciendo ADC
@@ -271,26 +308,9 @@ void configADC(){
 	//Selecciono puerto 0 | CLKDIV en 1 (25MHz/2 = 12.5 MHz) | Burst
 	LPC_ADC -> ADCR |= (1<<0) | (1<<8) | (1<<16);
 
-	//Interrupcion de ADC0.0
-	//LPC_ADC0 -> ADINTEN |= (1<<0);
-
-	//Habilito Interrupcion ADC en NVIC
-	//NVIC_EnableIRQ(ADC_IRQn);
-
 	return;
 }
 
-void newHighscore(){
 
-	if (flagHigh == 0){
-		*FIO0CLR |= (1<<22); //Enciendo lampara
-		flagHigh++;
-	}else {
-		*FIO0SET |= (1<<22); //Apago lampara
-		flagHigh = 0;
-	}
-
-	return;
-}
 
 
